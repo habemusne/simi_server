@@ -1,3 +1,54 @@
+"""
+Author: Mark Chen
+Date: Jan 30, 2016
+Description: Service for managing Human Intelligence Tasks
+
+Usage:
+
+Step 1. Prepare your data
+    1.1. Put all the image files in the EC2. Specifically, put them in /var/www/html/images/ in
+        52.24.142.90
+    1.2. Make stimuli sequence files. Please make one file for one worker so that you don't
+        write code to process your sequence data in exp.html.
+    1.3. After the files are ready, put them in /var/www/html/filesPublic or /var/www/html/stimuli_data.
+
+Step 2. Run this server program on EC2.
+    2.1. In config.conf, customize the global variables. Here are the variable's explanations:
+        allowed_pending_gap: Change this to the maximum allowed time for a worker to finish a
+                HIT. The time should be in second. For example, if you want your worker to
+                finished your HIT in 45 minutes, then change this value to 45 x 60 = 2700
+        stimuli_dir_url: Change this to the url of the directory of your stimuli sequence data.
+                For example, in Amanda's server 52.24.142.90, in the directory
+                /var/www/html/stimuli_data/Jan29/, there are three sample stimuli sequence data
+                files. Then the url of the directory of this stimuli sequence data is
+                http://52.24.142.90/stimuli_data/Jan29/ (You can use your browser to open this
+                link and you will see what I mean).
+        port: the server port that you will be using. If you run this program and you terminate it
+                very soon, then in the next run it will pop up an error "Address already in use".
+                If so, just change the port number in this file and you will be fine
+        check_gap: don't change this
+    2.2. You are now ready to run. In the directory, type "python server.py[ENTER]"
+
+Step 3. Adapt your experiment to link to this server
+    3.1. In exp.html, change your code so that:
+        1. When the worker loads this page, send a string 'GET=-=' to this server. This server
+            will then return a url which links to an available stimuli sequence file (for example,
+            http://52.24.142.90/stimuli_data/Jan29/test_data1.txt). Then you have a stimuli sequence,
+            which means that the worker can start the experiment now. So let the Javascript immediately
+            send another string 'PEND=-=<your stimuli sequence url>' (for example,
+            'PEND=-=http://52.24.142.90/stimuli_data/Jan29/test_data1.txt'). At this time, the server
+            will mark this stimuli sequence file as "pending".
+        2. When the worker finishes the experiment, let the Javascript send another string to this server:
+            "COMPLETE=-=<your stimuli sequence url>". At this moment, the server will mark the stimuli
+            sequence file as "completed". If you are wondering which code block you should change, I
+            would bet the 'on_finish' method in 'start' method at the end of exp.html
+        3. If the worker accidentally ddrops the experiment, your don't have to do anything. This
+            program will do the work for you. Specifically, the "allowed_pending_gap" variable
+            you configured in step 2.1 marks the time interval for checking failed experiments.
+            If a stimuli sequence file has been marked "pending" for too long, this program will
+            mark it as available so that the next worker can still get it.
+"""
+
 import socket
 import sys
 from repeated_timer import RepeatedTimer
@@ -6,10 +57,6 @@ import contextlib
 from lxml.html import document_fromstring
 import datetime
 import ConfigParser
-import threading
-from time import sleep
-
-import test_client
 
 
 class Server:
@@ -19,14 +66,16 @@ class Server:
         self.allowed_pending_gap = 5
         self.sock = None
         self.regular_checker = None
+        self.stimuli_dir_url = None
         self.configure()
-        self.stimuli_info_dict = self.init_stimuli_info_dict('http://52.24.142.90/stimuli_data/Jan29/')
+        self.stimuli_info_dict = self.init_stimuli_info_dict(self.stimuli_dir_url)
         self.regular_checker = RepeatedTimer(self.check_gap, self.check_fail)
 
     def configure(self):
         config_parser = ConfigParser.ConfigParser(allow_no_value=True)
         config_parser.read('config.conf')
         self.port = config_parser.getint('general', 'port')
+        self.stimuli_dir_url = config_parser.get('general', 'stimuli_dir_url')
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind(('localhost', self.port))
@@ -132,132 +181,6 @@ class Server:
             finally:
                 client_socket.close()
 
-
-class ServerTester:
-    def __init__(self):
-        self.server = Server()
-
-    def test_get_stimuli_urls(self):
-        url = 'http://52.24.142.90/stimuli_data/Jan29/'
-        result = self.server.get_stimuli_urls(url)
-        assert result[0] == 'http://52.24.142.90/stimuli_data/Jan29/test_data1.txt'
-        assert result[1] == 'http://52.24.142.90/stimuli_data/Jan29/test_data2.txt'
-        assert result[2] == 'http://52.24.142.90/stimuli_data/Jan29/test_data3.txt'
-
-    def test_GET(self):
-        client_thread = threading.Thread(target=self.test_GET_client_func)
-        client_thread.start()
-        self.server.run()
-
-    def test_PEND(self):
-        client_thread = threading.Thread(target=self.test_PEND_client_func)
-        client_thread.start()
-        self.server.run()
-
-    def test_COMPLETE(self):
-        client_thread = threading.Thread(target=self.test_COMPLETE_client_func)
-        client_thread.start()
-        self.server.run()
-
-    def test_checkfail(self):
-        stimuli_urls = [key for key in self.server.stimuli_info_dict.keys()]
-        self.server.mark_stimuli_status(stimuli_urls[0], 'pending')
-        for i in range(0, self.server.allowed_pending_gap + 5):
-            sleep(1)
-            if i < self.server.allowed_pending_gap:
-                assert self.server.stimuli_info_dict[stimuli_urls[0]]['status'] == 'pending'
-            else:
-                assert self.server.stimuli_info_dict[stimuli_urls[0]]['status'] == 'waiting'
-
-    def test_GET_client_func(self):
-        sleep(2)
-
-        client = test_client.Client()
-        stimuli_url = client.run('GET=-=')
-        assert stimuli_url in self.server.stimuli_info_dict
-        assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'waiting'
-
-        print 'Client side is done'
-
-    def test_PEND_client_func(self):
-        sleep(2)
-
-        client = test_client.Client()
-        stimuli_url = client.run('GET=-=')
-
-        client = test_client.Client()
-        client.run('PEND=-=' + stimuli_url)
-        assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'pending'
-
-        print 'Client side is done'
-
-    def test_COMPLETE_client_func(self):
-        sleep(2)
-
-        client = test_client.Client()
-        stimuli_url = client.run('GET=-=')
-
-        client = test_client.Client()
-        client.run('PEND=-=' + stimuli_url)
-        assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'pending'
-
-        client = test_client.Client()
-        client.run('COMPLETE=-=' + stimuli_url)
-        assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'completed'
-
-        print 'Client side is done'
-
-    def test_checkfail_client_func(self):
-        sleep(2)
-
-        client = test_client.Client()
-        stimuli_url = client.run('GET=-=')
-
-        client = test_client.Client()
-        client.run('PEND=-=' + stimuli_url)
-
-        for i in range(0, self.server.allowed_pending_gap + 5):
-            sleep(1)
-            print 'Sleeped ' + str(i) + 'th second.'
-            print 'status: ' + self.server.stimuli_info_dict[stimuli_url]['status']
-            # if i < self.server.allowed_pending_gap:
-            #     assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'pending'
-            # else:
-            #     assert self.server.stimuli_info_dict[stimuli_url]['status'] == 'waiting'
-
-        print 'Client side is done'
-
-    def test_integration(self):
-
-        worker1_get_client
-
-        worker2_get_client = test_client.Client()
-        worker2_accept_client = test_client.Client()
-        worker2_complete_client = test_client.Client()
-
-        worker3_get_client = test_client.Client()
-        worker3_accept_client = test_client.Client()
-        worker3_complete_client = test_client.Client()
-
-        worker4_get_client = test_client.Client()
-        worker4_accept_client = test_client.Client()
-        worker4_complete_client = test_client.Client()
-
-    # Worker1 waits for 1 second, then clicks on 'Accept HIT'.
-    def test_integration_worker1(self):
-        worker1_get_client = test_client.Client()
-        worker1_accept_client = test_client.Client()
-        worker1_complete_client = test_client.Client()
-
-        sleep(1)
-
-
-server_tester = ServerTester()
-# server_tester.test_get_stimuli_urls()
-# server_tester.test_GET()
-# server_tester.test_PEND()
-# server_tester.test_COMPLETE()
-server_tester.test_checkfail()
 
 # server = Server()
 # server.run()
