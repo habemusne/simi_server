@@ -115,14 +115,18 @@ class ServerTester:
         worker4_complete_client = test_client.Client()
 
     # Worker1 waits for 1 second, then clicks on 'Accept HIT'. She finishes
-    #   the HIT in 4 seconds, after which she click on "submit HIT" and get done.
+    #   the HIT in 4 seconds, after which she clicks on "submit HIT" and gets done.
     def test_integration_worker1(self):
         worker1_get_client = test_client.Client()
         worker1_accept_client = test_client.Client()
         worker1_complete_client = test_client.Client()
 
         sleep(1)
-        worker1_get_client
+        stimuli_url = worker1_get_client.run('GET=-=')
+        worker1_accept_client.run('PEND=-=' + stimuli_url)
+        sleep(4)
+        worker1_complete_client.run('COMPLETE=-=' + stimuli_url)
+
 
 
 server_tester = ServerTester()

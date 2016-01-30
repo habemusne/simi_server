@@ -182,5 +182,5 @@ class Server:
                 client_socket.close()
 
 
-# server = Server()
-# server.run()
+server = Server()
+server.run()

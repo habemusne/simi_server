@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <title>Test</title>
+    <script src="jquery.js"></script>  
+    <script type="application/javascript">
+        var ws;
+        var stimuli_url;
+        function init() {
+            var servermsg = document.getElementById("servermsg");
+            ws = new WebSocket("ws://127.0.0.1:8111/");
+            ws.onopen = function(){
+                servermsg.innerHTML = servermsg.innerHTML + "<br>Server connected";
+            };
+            ws.onmessage = function(e){
+                stimuli_url = e.data;
+            };
+            ws.onclose = function(){
+                servermsg.innerHTML = servermsg.innerHTML + "<br>Server disconnected";
+            };
+        }
+        function postmsg(text){
+            ws.send(text);
+        }
+        //$(function(){
+        //    var text = document.getElementById("message").value;
+        //    ws.send(text);
+        //    servermsg.innerHTML = servermsg.innerHTML + "<br>Sent: " + text;            
+        //});
+        postmsg('GET=-=')
+        setTimeout(function() {
+            console.log(stimuli_url)
+        }, 1000);
+
+    </script>
+</head>
+<body onload="init();">
+    <div id="servermsg"><h1>Message log:</h1></div>
+</body>
+
+</html>
