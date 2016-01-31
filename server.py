@@ -149,32 +149,32 @@ class Server:
             return False
         return True
 
-    # def run(self):
-    #
-    #     while True:
-    #         print 'Server starts. Listening...'
-    #         client_socket, client_address = self.sock.accept()
-    #         print 'Got a connection from ' + str(client_address)
-    #         try:
-    #             # Receive the data in small chunks and retransmit it
-    #             data = client_socket.recv(4096)
-    #             print >> sys.stderr, 'received "%s"' % data
-    #             if not self.validate_received_data(data):
-    #                 print 'Data format not correct. You need to have a command string ' + \
-    #                       'followed by a option string, seperated by a "=-="'
-    #                 continue
-    #             cmd = data.split('=-=')[0]
-    #             opt = data.split('=-=')[1]
-    #             if data:
-    #                 response = self.socket_listen_callback(cmd, opt)
-    #                 print >> sys.stderr, 'sending response'
-    #                 if not response:
-    #                     response = 'success'
-    #                 client_socket.sendall(response)
-    #             else:
-    #                 print >> sys.stderr, 'no more data from', client_address
-    #                 break
-    #         except KeyboardInterrupt:
-    #             print 'KeyboardInterrupt'
-    #         finally:
-    #             client_socket.close()
+    def run(self):
+
+        while True:
+            print 'Server starts. Listening...'
+            client_socket, client_address = self.sock.accept()
+            print 'Got a connection from ' + str(client_address)
+            try:
+                # Receive the data in small chunks and retransmit it
+                data = client_socket.recv(4096)
+                print >> sys.stderr, 'received "%s"' % data
+                if not self.validate_received_data(data):
+                    print 'Data format not correct. You need to have a command string ' + \
+                          'followed by a option string, seperated by a "=-="'
+                    continue
+                cmd = data.split('=-=')[0]
+                opt = data.split('=-=')[1]
+                if data:
+                    response = self.socket_listen_callback(cmd, opt)
+                    print >> sys.stderr, 'sending response'
+                    if not response:
+                        response = 'success'
+                    client_socket.sendall(response)
+                else:
+                    print >> sys.stderr, 'no more data from', client_address
+                    break
+            except KeyboardInterrupt:
+                print 'KeyboardInterrupt'
+            finally:
+                client_socket.close()

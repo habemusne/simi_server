@@ -1,5 +1,7 @@
+import sys
 from autobahn.twisted.websocket import WebSocketServerProtocol, \
     WebSocketServerFactory
+import ConfigParser
 from server import Server
 
 server = Server()
@@ -32,17 +34,17 @@ class MyServerProtocol(WebSocketServerProtocol):
 
 
 if __name__ == '__main__':
-
-    import sys
-
     from twisted.python import log
     from twisted.internet import reactor
 
+    config_parser = ConfigParser.ConfigParser(allow_no_value=True)
+    config_parser.read('config.conf')
+    port = config_parser.getint('general', 'port')
     log.startLogging(sys.stdout)
 
-    factory = WebSocketServerFactory(u"ws://127.0.0.1:8113", debug=False)
+    factory = WebSocketServerFactory(u"ws://127.0.0.1:" + str(port), debug=False)
     factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    reactor.listenTCP(8113, factory)
+    reactor.listenTCP(port, factory)
     reactor.run()
