@@ -7,12 +7,12 @@ Description: Service for managing Human Intelligence Tasks
 Usage
 ====
 
-* Step 1. Prepare your data
+* ### Step 1. Prepare your data
     * Put all the image files in the EC2. Specifically, put them in /var/www/html/images/ in 52.24.142.90
     * Make stimuli sequence files. Please make one file for one worker so that you don't write code to process your sequence data in exp.html.
     * After the files are ready, put them in /var/www/html/filesPublic or /var/www/html/stimuli_data.
 
-* Step 2. Run this server program on EC2.
+* ### Step 2. Run this server program on EC2.
     * In config.conf, customize the global variables. Here are the variable's explanations:
         * allowed_pending_gap: Change this to the maximum allowed time for a worker to finish a HIT. The time should be in second. For example, if you want your worker to finished your HIT in 45 minutes, then change this value to 45 x 60 = 2700
         * stimuli_dir_url: Change this to the url of the directory of your stimuli sequence data. For example, in Amanda's server 52.24.142.90, in the directory /var/www/html/stimuli_data/Jan29/, there are three sample stimuli sequence data files. Then the url of the directory of this stimuli sequence data is http://52.24.142.90/stimuli_data/Jan29/ (You can use your browser to open this link and you will see what I mean).
@@ -20,9 +20,10 @@ Usage
         * check_gap: don't change this
     * You are now ready to run. In the directory, type "python start.py[ENTER]"
 
-* Step 3. Adapt your experiment to link to this server
-    * In exp.html,:
-        * Add the following code:
+* ### Step 3. Adapt your experiment to link to this server
+	*  In exp.html:
+
+        * In the ``` <head></head> ``` block, add the following code:
 
 			```html
                <script src="/statis/js/EC2_communicator.js" type="text/javascript"></script>
@@ -57,8 +58,16 @@ Usage
            
         * When the worker finishes the experiment, let the Javascript send another string to this server: "COMPLETE=-=<your stimuli sequence url>". At this moment, the server will mark the stimuli sequence file as "completed". If you are wondering which code block you should change, I would bet the 'on_finish' method in 'start' method at the end of exp.html:
         
-        	```javascript
-               EC2_communicator.send_command('COMPLETE=-=' + stimuli_file_url);
-            ```
+		```javascript
+        on_finish: function() {
+            psiturk.saveData({
+                success: function() {
+                  EC2_communicator.send_command('COMPLETE=-=' + stimuli_file_url);
+                  psiturk.completeHIT();
+                }
+            });
+        }
+		```
            
         * If the worker accidentally drops the experiment, your don't have to do anything. This program will do the work for you. Specifically, the "allowed_pending_gap" variable you configured in step 2.1 marks the time interval for checking failed experiments. If a stimuli sequence file has been marked "pending" for too long, this program will mark it as available so that the next worker can still get it.
+
