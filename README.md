@@ -21,6 +21,7 @@ Usage
     * You are now ready to run. In the directory, type "python start.py[ENTER]"
 
 * ### Step 3. Adapt your experiment to link to this server
+  *  Put EC2_communicator.js in this repository into /static/js/
 	*  In exp.html:
 
         * In the ``` <head></head> ``` block, add the following code:
