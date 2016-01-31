@@ -18,7 +18,7 @@ class Client:
     def run(self, message):
         try:
             self.sock.sendall(message)
-            data = self.sock.recv(1024)
+            data = self.sock.recv(4096)
             print >>sys.stderr, 'received "%s"' % data
         finally:
             print >>sys.stderr, 'closing socket'
