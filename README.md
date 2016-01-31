@@ -18,6 +18,7 @@ Usage
         * stimuli_dir_url: Change this to the url of the directory of your stimuli sequence data. For example, in Amanda's server 52.24.142.90, in the directory /var/www/html/stimuli_data/Jan29/, there are three sample stimuli sequence data files. Then the url of the directory of this stimuli sequence data is http://52.24.142.90/stimuli_data/Jan29/ (You can use your browser to open this link and you will see what I mean).
         * port: the server port that you will be using. If you run this program and you terminate it very soon, then in the next run it will pop up an error "Address already in use". If so, just change the port number in this file and you will be fine
         * check_gap: don't change this
+    * In the security group setting of your EC2 instance, open the port that you just specified
     * You are now ready to run. In the directory, type "python start.py[ENTER]"
 
 * ### Step 3. Adapt your experiment to link to this server
