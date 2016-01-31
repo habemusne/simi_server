@@ -5,7 +5,7 @@
          var socket = null;
          var isopen = false;
          window.onload = function() {
-            socket = new WebSocket("ws://54.174.211.46:8113");
+            socket = new WebSocket("ws://54.174.211.46:9000");
             socket.binaryType = "arraybuffer";
             socket.onopen = function() {
                console.log("Connected!");

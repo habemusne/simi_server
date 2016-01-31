@@ -42,12 +42,9 @@ if __name__ == '__main__':
     port = config_parser.getint('general', 'port')
     log.startLogging(sys.stdout)
 
-    factory = WebSocketServerFactory(u"ws://127.0.0.1:" + str(port), debug=False)
+    factory = WebSocketServerFactory(u"ws://localhost:" + str(port), debug=False)
     factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    try:
-        reactor.listenTCP(port, factory)
-        reactor.run()
-    finally:
-        pass
+    reactor.listenTCP(port, factory)
+    reactor.run()
