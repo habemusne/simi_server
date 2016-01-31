@@ -23,10 +23,11 @@ class MyServerProtocol(WebSocketServerProtocol):
             if not server.validate_received_data(message):
                 print 'Data format not correct. You need to have a command string ' + \
                       'followed by a option string, seperated by a "=-="'
-                return
-            cmd = message.split('=-=')[0]
-            opt = message.split('=-=')[1]
-            response = self.socket_listen_callback(cmd, opt)
+                response = 'failure'
+            else:
+                cmd = message.split('=-=')[0]
+                opt = message.split('=-=')[1]
+                response = server.socket_listen_callback(cmd, opt)
             self.sendMessage(response, isBinary)
 
     def onClose(self, wasClean, code, reason):
