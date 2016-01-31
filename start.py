@@ -46,5 +46,8 @@ if __name__ == '__main__':
     factory.protocol = MyServerProtocol
     # factory.setProtocolOptions(maxConnections=2)
 
-    reactor.listenTCP(port, factory)
-    reactor.run()
+    try:
+        reactor.listenTCP(port, factory)
+        reactor.run()
+    finally:
+        pass
