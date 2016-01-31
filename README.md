@@ -22,13 +22,13 @@ Usage
 
 * Step 3. Adapt your experiment to link to this server
     * In exp.html,:
-        * Add the following code (Should be around line 25 at exp.html by now):
+        * Add the following code:
 
 			```html
                <script src="/statis/js/EC2_communicator.js" type="text/javascript"></script>
 			```
         
-        * Specify variable EC2_IP and EC2_PORT (Should be around line 50 by now):
+        * In the huge javascript codes, Specify variable EC2_IP and EC2_PORT:
        		```javascript
                var EC2_IP = '52.24.142.90';
                var EC2_PORT = '9000';
