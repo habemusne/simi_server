@@ -4,12 +4,12 @@
       <script type="text/javascript" src='EC2_communicator.js'></script>
       <script>
         var EC2_communicator = new EC2Communicator();
-        EC2_communicator.init('localhost', '9000');
+        EC2_comm.init('localhost', '9000');
 
         var get_cmd = "GET=-=";
       </script>
    </head>
    <body>
-      <button onclick='EC2_communicator.send_command(get_cmd);'>Send Text Message</button>
+      <button onclick='EC2_comm.send_command(get_cmd);'>Send Text Message</button>
    </body>
 </html>
